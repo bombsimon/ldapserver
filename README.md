@@ -1,5 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/vjeantet/ldapserver?status.svg)](https://godoc.org/github.com/vjeantet/ldapserver)
-[![Build Status](https://travis-ci.org/vjeantet/ldapserver.svg)](https://travis-ci.org/vjeantet/ldapserver)
+[![GoDoc](https://godoc.org/github.com/bombsimon/ldapserver?status.svg)](https://godoc.org/github.com/bombsimon/ldapserver)
 
 **This package is a work in progress.**
 
@@ -35,15 +34,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	ldap "github.com/vjeantet/ldapserver"
+	ldap "github.com/bombsimon/ldapserver"
 )
 
 func main() {
-	//ldap logger
-	ldap.Logger = log.New(os.Stdout, "[server] ", log.LstdFlags)
-
 	//Create a new LDAP Server
-	server := ldap.NewServer()
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+	server := ldap.NewServer(logger)
 
 	routes := ldap.NewRouteMux()
 	routes.Bind(handleBind)
