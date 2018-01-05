@@ -2,6 +2,7 @@ package ldapserver
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ type Server struct {
 	WriteTimeout time.Duration  // optional write timeout
 	wg           sync.WaitGroup // group of goroutines (1 by client)
 	chDone       chan bool      // Channel Done, value => shutdown
+	logger       logger         // Logger interface
 
 	// OnNewConnection, if non-nil, is called on new connections.
 	// If it returns non-nil, the connection is closed.
@@ -25,9 +27,10 @@ type Server struct {
 }
 
 //NewServer return a LDAP Server
-func NewServer() *Server {
+func NewServer(l logger) *Server {
 	return &Server{
 		chDone: make(chan bool),
+		logger: l,
 	}
 }
 
@@ -54,7 +57,7 @@ func (s *Server) ListenAndServe(addr string, options ...func(*Server)) error {
 	if e != nil {
 		return e
 	}
-	Logger.Printf("Listening on %s\n", addr)
+	s.logger.Printf("Listening on %s\n", addr)
 
 	for _, option := range options {
 		option(s)
@@ -68,7 +71,7 @@ func (s *Server) serve() error {
 	defer s.Listener.Close()
 
 	if s.Handler == nil {
-		Logger.Panicln("No LDAP Request Handler defined")
+		return fmt.Errorf("No LDAP Request Handler defined")
 	}
 
 	i := 0
@@ -76,7 +79,7 @@ func (s *Server) serve() error {
 	for {
 		select {
 		case <-s.chDone:
-			Logger.Print("Stopping server")
+			s.logger.Print("Stopping server")
 			s.Listener.Close()
 			return nil
 		default:
@@ -94,7 +97,7 @@ func (s *Server) serve() error {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
 				continue
 			}
-			Logger.Println(err)
+			s.logger.Println(err)
 		}
 
 		cli, err := s.newClient(rw)
@@ -105,7 +108,7 @@ func (s *Server) serve() error {
 
 		i = i + 1
 		cli.Numero = i
-		Logger.Printf("Connection client [%d] from %s accepted", cli.Numero, cli.rwc.RemoteAddr().String())
+		s.logger.Printf("Connection client [%d] from %s accepted", cli.Numero, cli.rwc.RemoteAddr().String())
 		s.wg.Add(1)
 		go cli.serve()
 	}
@@ -117,10 +120,11 @@ func (s *Server) serve() error {
 // client has a writer and reader buffer
 func (s *Server) newClient(rwc net.Conn) (c *client, err error) {
 	c = &client{
-		srv: s,
-		rwc: rwc,
-		br:  bufio.NewReader(rwc),
-		bw:  bufio.NewWriter(rwc),
+		srv:    s,
+		rwc:    rwc,
+		br:     bufio.NewReader(rwc),
+		bw:     bufio.NewWriter(rwc),
+		logger: s.logger,
 	}
 	return c, nil
 }
@@ -137,7 +141,7 @@ func (s *Server) newClient(rwc net.Conn) (c *client, err error) {
 // In either case, when the LDAP session is terminated.
 func (s *Server) Stop() {
 	close(s.chDone)
-	Logger.Print("gracefully closing client connections...")
+	s.logger.Print("gracefully closing client connections...")
 	s.wg.Wait()
-	Logger.Print("all clients connection closed")
+	s.logger.Print("all clients connection closed")
 }
