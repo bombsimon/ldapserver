@@ -1,6 +1,6 @@
 package ldapserver
 
-import ldap "github.com/vjeantet/goldap/message"
+import ldap "github.com/bombsimon/ldapserver/message"
 
 // LDAP Application Codes
 const (

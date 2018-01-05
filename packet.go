@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	ldap "github.com/vjeantet/goldap/message"
+	ldap "github.com/bombsimon/ldapserver/message"
 )
 
 type messagePacket struct {

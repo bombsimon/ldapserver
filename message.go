@@ -3,11 +3,11 @@ package ldapserver
 import (
 	"fmt"
 
-	ldap "github.com/vjeantet/goldap/message"
+	"github.com/bombsimon/ldapserver/message"
 )
 
 type Message struct {
-	*ldap.LDAPMessage
+	*message.LDAPMessage
 	Client *client
 	Done   chan bool
 }
@@ -22,34 +22,34 @@ func (m *Message) Abandon() {
 	m.Done <- true
 }
 
-func (m *Message) GetAbandonRequest() ldap.AbandonRequest {
-	return m.ProtocolOp().(ldap.AbandonRequest)
+func (m *Message) GetAbandonRequest() message.AbandonRequest {
+	return m.ProtocolOp().(message.AbandonRequest)
 }
 
-func (m *Message) GetSearchRequest() ldap.SearchRequest {
-	return m.ProtocolOp().(ldap.SearchRequest)
+func (m *Message) GetSearchRequest() message.SearchRequest {
+	return m.ProtocolOp().(message.SearchRequest)
 }
 
-func (m *Message) GetBindRequest() ldap.BindRequest {
-	return m.ProtocolOp().(ldap.BindRequest)
+func (m *Message) GetBindRequest() message.BindRequest {
+	return m.ProtocolOp().(message.BindRequest)
 }
 
-func (m *Message) GetAddRequest() ldap.AddRequest {
-	return m.ProtocolOp().(ldap.AddRequest)
+func (m *Message) GetAddRequest() message.AddRequest {
+	return m.ProtocolOp().(message.AddRequest)
 }
 
-func (m *Message) GetDeleteRequest() ldap.DelRequest {
-	return m.ProtocolOp().(ldap.DelRequest)
+func (m *Message) GetDeleteRequest() message.DelRequest {
+	return m.ProtocolOp().(message.DelRequest)
 }
 
-func (m *Message) GetModifyRequest() ldap.ModifyRequest {
-	return m.ProtocolOp().(ldap.ModifyRequest)
+func (m *Message) GetModifyRequest() message.ModifyRequest {
+	return m.ProtocolOp().(message.ModifyRequest)
 }
 
-func (m *Message) GetCompareRequest() ldap.CompareRequest {
-	return m.ProtocolOp().(ldap.CompareRequest)
+func (m *Message) GetCompareRequest() message.CompareRequest {
+	return m.ProtocolOp().(message.CompareRequest)
 }
 
-func (m *Message) GetExtendedRequest() ldap.ExtendedRequest {
-	return m.ProtocolOp().(ldap.ExtendedRequest)
+func (m *Message) GetExtendedRequest() message.ExtendedRequest {
+	return m.ProtocolOp().(message.ExtendedRequest)
 }
