@@ -15,7 +15,6 @@ type Server struct {
 	WriteTimeout time.Duration  // optional write timeout
 	wg           sync.WaitGroup // group of goroutines (1 by client)
 	chDone       chan bool      // Channel Done, value => shutdown
-	logger       logger         // Logger interface
 
 	// OnNewConnection, if non-nil, is called on new connections.
 	// If it returns non-nil, the connection is closed.
@@ -27,10 +26,9 @@ type Server struct {
 }
 
 //NewServer return a LDAP Server
-func NewServer(l logger) *Server {
+func NewServer() *Server {
 	return &Server{
 		chDone: make(chan bool),
-		logger: l,
 	}
 }
 
@@ -57,7 +55,7 @@ func (s *Server) ListenAndServe(addr string, options ...func(*Server)) error {
 	if e != nil {
 		return e
 	}
-	s.logger.Printf("Listening on %s\n", addr)
+	logger.Infof("Listening on %s\n", addr)
 
 	for _, option := range options {
 		option(s)
@@ -79,7 +77,7 @@ func (s *Server) serve() error {
 	for {
 		select {
 		case <-s.chDone:
-			s.logger.Print("Stopping server")
+			logger.Info("Stopping server")
 			s.Listener.Close()
 			return nil
 		default:
@@ -97,7 +95,7 @@ func (s *Server) serve() error {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
 				continue
 			}
-			s.logger.Println(err)
+			logger.Warn(err)
 		}
 
 		cli, err := s.newClient(rw)
@@ -108,7 +106,7 @@ func (s *Server) serve() error {
 
 		i = i + 1
 		cli.Numero = i
-		s.logger.Printf("Connection client [%d] from %s accepted", cli.Numero, cli.rwc.RemoteAddr().String())
+		logger.Infof("Connection client [%d] from %s accepted", cli.Numero, cli.rwc.RemoteAddr().String())
 		s.wg.Add(1)
 		go cli.serve()
 	}
@@ -120,11 +118,10 @@ func (s *Server) serve() error {
 // client has a writer and reader buffer
 func (s *Server) newClient(rwc net.Conn) (c *client, err error) {
 	c = &client{
-		srv:    s,
-		rwc:    rwc,
-		br:     bufio.NewReader(rwc),
-		bw:     bufio.NewWriter(rwc),
-		logger: s.logger,
+		srv: s,
+		rwc: rwc,
+		br:  bufio.NewReader(rwc),
+		bw:  bufio.NewWriter(rwc),
 	}
 	return c, nil
 }
@@ -141,7 +138,7 @@ func (s *Server) newClient(rwc net.Conn) (c *client, err error) {
 // In either case, when the LDAP session is terminated.
 func (s *Server) Stop() {
 	close(s.chDone)
-	s.logger.Print("gracefully closing client connections...")
+	logger.Info("gracefully closing client connections...")
 	s.wg.Wait()
-	s.logger.Print("all clients connection closed")
+	logger.Info("all clients connection closed")
 }

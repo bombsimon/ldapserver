@@ -12,12 +12,11 @@ import (
 )
 
 func main() {
-
-	//ldap logger
-	ldap.Logger = log.New(os.Stdout, "[server] ", log.LstdFlags)
-
 	//Create a new LDAP Server
 	server := ldap.NewServer()
+
+	logger := log.Logger(os.Stdout, "[server] ", log.LstdFlags)
+	server.SetStdLogger(logger)
 
 	routes := ldap.NewRouteMux()
 	routes.Bind(handleBind)
